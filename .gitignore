@@ -4,3 +4,4 @@ secrets.ini
 *.swp
 .python-version
 .*_history
+.cache
