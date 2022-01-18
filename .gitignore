@@ -3,3 +3,4 @@ secrets.ini
 .idea
 *.swp
 .python-version
+.*_history
