@@ -1,0 +1,10 @@
+version: "3.3"
+
+services:
+  app:
+    image: tg2fibery:latest
+    volumes:
+      - type: bind
+        source: ./
+        target: /root
+# TODO: add mountebank image andyrbell/mountebank
