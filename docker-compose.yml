@@ -1,10 +1,14 @@
 version: "3.3"
 
 services:
-  app:
+  dev:
     image: tg2fibery:latest
     volumes:
       - type: bind
         source: ./
         target: /root
-# TODO: add mountebank image andyrbell/mountebank
+    depends_on:
+      - mountebank
+
+  mountebank:
+    image: andyrbell/mountebank

@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
 docker build --tag tg2fibery:latest .
-docker-compose run --rm app /bin/bash
 docker image prune --force
+docker-compose run --rm dev /bin/bash
+docker-compose down
