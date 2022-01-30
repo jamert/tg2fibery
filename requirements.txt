@@ -4,6 +4,8 @@
 #
 #    pip-compile
 #
+attrs==21.4.0
+    # via -r requirements.in
 certifi==2021.10.8
     # via requests
 charset-normalizer==2.0.10
