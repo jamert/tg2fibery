@@ -5,3 +5,4 @@ secrets.ini
 .python-version
 .*_history
 .cache
+__pycache__
