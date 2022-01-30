@@ -4,6 +4,7 @@ WORKDIR /root/
 
 # development only
 RUN pip install pip-tools
+# TODO: sync shell history between rebuilds
 
 COPY requirements.txt .
 RUN pip-sync
