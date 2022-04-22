@@ -1,8 +1,10 @@
 version: "3.3"
 
 services:
-  dev:
+  test:
     image: tg2fibery:latest
+    command:
+      - pytest
     volumes:
       - type: bind
         source: ./
