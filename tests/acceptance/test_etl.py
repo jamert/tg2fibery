@@ -43,7 +43,7 @@ class MockTelegram:
                 "stubs": [
                     {
                         "responses": [
-                            {"is": {"statusCode": 200, "body": f"{self._message}"}}
+                            {"is": {"statusCode": 200, "body": self.update(self._message)}}
                         ],
                         "predicates": [
                             {
@@ -61,6 +61,16 @@ class MockTelegram:
 
     def teardown(self) -> None:
         requests.delete(url=f"{mountebank_address}/imposters/{self._port}")
+
+    @staticmethod
+    def update(text: str) -> dict:
+        return {
+            "update_id": 145,
+            "message": {
+                "message_id": 5554,
+                "text": text,
+            }
+        }
 
 
 @contextmanager
