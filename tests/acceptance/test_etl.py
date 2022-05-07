@@ -43,7 +43,12 @@ class MockTelegram:
                 "stubs": [
                     {
                         "responses": [
-                            {"is": {"statusCode": 200, "body": self.update(self._message)}}
+                            {
+                                "is": {
+                                    "statusCode": 200,
+                                    "body": self.update(self._message),
+                                }
+                            }
                         ],
                         "predicates": [
                             {
@@ -69,7 +74,7 @@ class MockTelegram:
             "message": {
                 "message_id": 5554,
                 "text": text,
-            }
+            },
         }
 
 
@@ -97,41 +102,50 @@ class MockFibery:
                 "protocol": "http",
                 "name": "Fibery Mock",
                 "defaultResponse": {"statusCode": 400, "body": "Bad Request"},
-                "stubs": [
-                    {
-                        "responses": [
-                            {
-                                "is": {
-                                    "statusCode": 200,
-                                    "body": {"success": True, "result": {}},
-                                }
-                            }
-                        ],
-                        "predicates": [
-                            {
-                                "equals": {
-                                    "method": "POST",
-                                    "path": "/api/commands",
-                                    "headers": {
-                                        "Authorization": f"Token {self.token}",
-                                        "Content-Type": "application/json",
-                                    },
-                                    "body": [
-                                        {
-                                            "command": "fibery.entity/create",
-                                            "args": {
-                                                "type": "K/M",
-                                                "fibery/id": "abcd",
-                                            },
-                                        }
-                                    ],
-                                }
-                            }
-                        ],
-                    }
-                ],
+                "stubs": [self.create_material()],
             },
         )
+
+    def create_material(self) -> dict:
+        return {
+            "responses": [
+                {
+                    "is": {
+                        "statusCode": 200,
+                        "body": {
+                            "success": True,
+                            "result": {
+                                "fibery/id": "90c6d940-ce27-11ec-b591-698a572b9bd4",
+                                "Knowledge Management/Praise": {
+                                    "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
+                                },
+                            },
+                        },
+                    }
+                }
+            ],
+            "predicates": [
+                {
+                    "equals": {
+                        "method": "POST",
+                        "path": "/api/commands",
+                        "headers": {
+                            "Authorization": f"Token {self.token}",
+                            "Content-Type": "application/json",
+                        },
+                        "body": [
+                            {
+                                "command": "fibery.entity/create",
+                                "args": {"type": "Knowledge Management/Material"},
+                            }
+                        ],
+                    },
+                },
+                {
+                    "exists": {"body": [{"args": {"entity": {"fibery/id": True}}}]},
+                },
+            ],
+        }
 
     def teardown(self) -> None:
         requests.delete(url=f"{mountebank_address}/imposters/{self._port}")
@@ -158,8 +172,10 @@ def test_etl():
                 {
                     "command": "fibery.entity/create",
                     "args": {
-                        "type": "K/M",
-                        "fibery/id": "abcd",
+                        "type": "Knowledge Management/Material",
+                        "entity": {
+                            "fibery/id": "abcd",
+                        },
                     },
                 }
             ],

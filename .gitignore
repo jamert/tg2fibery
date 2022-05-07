@@ -6,3 +6,4 @@ secrets.ini
 .*_history
 .cache
 __pycache__
+scratch
