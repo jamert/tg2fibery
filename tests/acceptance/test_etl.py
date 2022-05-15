@@ -94,6 +94,9 @@ class MockFibery:
         self.token = "Arghs"
         self.address = f"{mountebank_address}".replace("2525", str(self._port))
 
+        self.material_id = "90c6d940-ce27-11ec-b591-698a572b9bd4"
+        self.material_praise_update_secret = "b33a25d1-99ba-11e9-8c59-09d0cb6f3aeb"
+
     def setup(self) -> None:
         requests.post(
             url=f"{mountebank_address}/imposters",
@@ -102,7 +105,11 @@ class MockFibery:
                 "protocol": "http",
                 "name": "Fibery Mock",
                 "defaultResponse": {"statusCode": 400, "body": "Bad Request"},
-                "stubs": [self.create_material()],
+                "stubs": [
+                    self.create_material(),
+                    self.get_material_praise_secret(),
+                    self.update_material_praise(),
+                ],
             },
         )
 
@@ -115,7 +122,7 @@ class MockFibery:
                         "body": {
                             "success": True,
                             "result": {
-                                "fibery/id": "90c6d940-ce27-11ec-b591-698a572b9bd4",
+                                "fibery/id": self.material_id,
                                 "Knowledge Management/Praise": {
                                     "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
                                 },
@@ -143,6 +150,86 @@ class MockFibery:
                 },
                 {
                     "exists": {"body": [{"args": {"entity": {"fibery/id": True}}}]},
+                },
+            ],
+        }
+
+    def get_material_praise_secret(self) -> dict:
+        return {
+            "responses": [
+                {
+                    "is": {
+                        "statusCode": 200,
+                        "body": {
+                            "success": True,
+                            "result": [
+                                {
+                                    "fibery/id": self.material_id,
+                                    "Knowledge Management/Praise": {
+                                        "Collaboration~Documents/secret": self.material_praise_update_secret
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                }
+            ],
+            "predicates": [
+                {
+                    "equals": {
+                        "method": "POST",
+                        "path": "/api/commands",
+                        "headers": {
+                            "Authorization": f"Token {self.token}",
+                            "Content-Type": "application/json",
+                        },
+                        "body": [
+                            {
+                                "command": "fibery.entity/query",
+                                "args": {
+                                    "q/from": "Knowledge Management/Material",
+                                    "q/select": [
+                                        "fibery/id",
+                                        {
+                                            "Knowledge Management/Praise": [
+                                                "Collaboration~Document/secret"
+                                            ]
+                                        },
+                                    ],
+                                    "q/where": ["=", '["fibery/id"]', "$id"],
+                                    "q/limit": 1,
+                                },
+                                "params": {"$id": self.material_id},
+                            }
+                        ],
+                    },
+                },
+            ],
+        }
+
+    def update_material_praise(self) -> dict:
+        return {
+            "responses": [
+                {
+                    "is": {
+                        "statusCode": 200,
+                    }
+                }
+            ],
+            "predicates": [
+                {
+                    "equals": {
+                        "method": "PUT",
+                        "path": f"/api/documents/{self.material_praise_update_secret}",
+                        "query": {"format": "md"},
+                        "headers": {
+                            "Authorization": f"Token {self.token}",
+                            "Content-Type": "application/json",
+                        },
+                    },
+                    "exists": {
+                        "body": {"content": True},
+                    },
                 },
             ],
         }
