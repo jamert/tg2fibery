@@ -7,3 +7,4 @@ secrets.ini
 .cache
 __pycache__
 scratch
+*.egg-info

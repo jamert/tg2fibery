@@ -4,5 +4,5 @@ deps:
 	pip-sync requirements.txt requirements-dev.txt
 
 format:
-	black tests
-	isort tests
+	black tests setup.py tg2fibery.py
+	isort tests setup.py tg2fibery.py

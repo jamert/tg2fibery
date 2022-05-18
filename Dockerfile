@@ -8,3 +8,5 @@ RUN pip install pip-tools
 
 COPY requirements*.txt .
 RUN pip-sync requirements*.txt
+COPY . .
+RUN pip install -e .

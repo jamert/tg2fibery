@@ -3,6 +3,7 @@ import configparser
 
 from attr import define
 
+
 @define
 class Telegram:
     token: str
