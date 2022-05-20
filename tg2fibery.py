@@ -10,10 +10,13 @@ class Telegram:
     token: str
 
 
-def get_token(config_string: str) -> str:
-    parser = configparser.ConfigParser()
-    parser.read_string(config_string)
-    return parser.get(section="telegram", option="token")
+class Config:
+    def __init__(self, filename: str) -> None:
+        self.parser = configparser.ConfigParser()
+        self.parser.read(filename)
+
+    def secrets(self, section: str) -> dict:
+        return dict(self.parser[section])
 
 
 @click.command
@@ -21,8 +24,7 @@ def get_token(config_string: str) -> str:
     "--secret", type=click.Path(exists=True, dir_okay=False), default="secrets.ini"
 )
 def main(secret: str) -> None:
-    with open(secret, "rt") as fd:
-        print(Telegram(token=get_token(fd.read())))
+    print(Telegram(**Config(secret).secrets("telegram")))
 
 
 if __name__ == "__main__":
