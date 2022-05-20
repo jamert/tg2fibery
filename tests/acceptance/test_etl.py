@@ -2,6 +2,7 @@ import random
 import string
 import subprocess
 from contextlib import contextmanager
+from pprint import pprint
 from tempfile import NamedTemporaryFile
 
 import requests
@@ -21,10 +22,10 @@ def telegram(message: str) -> "MockTelegram":
 
 class MockTelegram:
     def __init__(self, message: str) -> None:
-        self._port = 9090
+        self.port = 9090
         self._message = message
         self.token = self._random_token()
-        self.address = f"{mountebank_address}".replace("2525", str(self._port))
+        self.address = f"{mountebank_address}".replace("2525", str(self.port))
 
     @staticmethod
     def _random_token() -> str:
@@ -38,9 +39,10 @@ class MockTelegram:
         requests.post(
             url=f"{mountebank_address}/imposters",
             json={
-                "port": self._port,
+                "port": self.port,
                 "protocol": "http",
                 "name": "Telegram Mock",
+                "recordRequests": True,
                 "defaultResponse": {"statusCode": 400, "body": "Bad Request"},
                 "stubs": [
                     {
@@ -48,7 +50,7 @@ class MockTelegram:
                             {
                                 "is": {
                                     "statusCode": 200,
-                                    "body": self.update(self._message),
+                                    "body": [self.update(self._message)],
                                 }
                             }
                         ],
@@ -67,7 +69,10 @@ class MockTelegram:
         )
 
     def teardown(self) -> None:
-        requests.delete(url=f"{mountebank_address}/imposters/{self._port}")
+        url = f"{mountebank_address}/imposters/{self.port}"
+        print(f"HARNESS:{self.__class__.__name__}", end=" ")
+        pprint(requests.get(url=url).json()["requests"])
+        requests.delete(url=url)
 
     @staticmethod
     def update(text: str) -> dict:
@@ -250,10 +255,11 @@ class MockFibery:
 
 secrets_template = """
 [telegram]
+netloc=http://mountebank:{telegram_port}
 token={telegram_token}
 
 [fibery]
-netloc=localhost:{fibery_port}
+netloc=http://mountebank:{fibery_port}
 token={fibery_token}
 """
 
@@ -263,6 +269,7 @@ def secret(tg: MockTelegram, fbr: MockFibery) -> str:
     with NamedTemporaryFile(mode="w+t", encoding="utf-8") as fd:
         fd.write(
             secrets_template.format(
+                telegram_port=tg.port,
                 telegram_token=tg.token,
                 fibery_port=fbr.port,
                 fibery_token=fbr.token,
