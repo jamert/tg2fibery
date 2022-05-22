@@ -1,9 +1,11 @@
+import json
 import random
 import string
 import subprocess
 from contextlib import contextmanager
 from pprint import pprint
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import requests
 
@@ -200,7 +202,7 @@ class MockFibery:
                                         "fibery/id",
                                         {
                                             "Knowledge Management/Praise": [
-                                                "Collaboration~Document/secret"
+                                                "Collaboration~Documents/secret"
                                             ]
                                         },
                                     ],
@@ -243,14 +245,24 @@ class MockFibery:
         }
 
     def teardown(self) -> None:
-        requests.delete(url=f"{mountebank_address}/imposters/{self.port}")
+        url = f"{mountebank_address}/imposters/{self.port}"
+        print(f"HARNESS:{self.__class__.__name__}", end=" ")
+        pprint(requests.get(url=url).json()["requests"])
+        requests.delete(url=url)
 
     def compare_content(self, content: str) -> bool:
         response = requests.get(url=f"{mountebank_address}/imposters/{self.port}")
         return any(
-            content == request.get("body", {}).get("content")
+            content == self._maybe_extract_content(request.get("body", ""))
             for request in response.json()["requests"]
         )
+
+    @staticmethod
+    def _maybe_extract_content(body) -> Optional[str]:
+        try:
+            return json.loads(body)["content"]
+        except (ValueError, KeyError, TypeError):
+            return None
 
 
 secrets_template = """

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import configparser
 from typing import List
+from urllib.parse import urljoin
+from uuid import uuid4
 
 import click
 import requests
@@ -34,6 +36,72 @@ class Telegram:
         return TelegramUpdate.from_api_response(response.json())
 
 
+@define
+class Fibery:
+    netloc: str
+    token: str
+
+    def create_new_material_from_telegram_update(self, msg: TelegramUpdate) -> None:
+        # create new Material
+        response = requests.post(
+            url=urljoin(self.netloc, "/api/commands"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+            json=[
+                {
+                    "command": "fibery.entity/create",
+                    "args": {
+                        "type": "Knowledge Management/Material",
+                        "entity": {"fibery/id": str(uuid4())},
+                    },
+                }
+            ],
+        )
+        material_id = response.json()["result"]["fibery/id"]
+        # get document secret
+        response = requests.post(
+            url=urljoin(self.netloc, "/api/commands"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+            json=[
+                {
+                    "command": "fibery.entity/query",
+                    "args": {
+                        "q/from": "Knowledge Management/Material",
+                        "q/select": [
+                            "fibery/id",
+                            {
+                                "Knowledge Management/Praise": [
+                                    "Collaboration~Documents/secret"
+                                ]
+                            },
+                        ],
+                        "q/where": ["=", '["fibery/id"]', "$id"],
+                        "q/limit": 1,
+                    },
+                    "params": {"$id": material_id},
+                }
+            ],
+        )
+        secret = response.json()["result"][0]["Knowledge Management/Praise"][
+            "Collaboration~Documents/secret"
+        ]
+        # update Praise
+        response = requests.put(
+            url=urljoin(self.netloc, f"/api/documents/{secret}?format=md"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+            json={"content": msg.content},
+        )
+        print(response.status_code)
+
+
 class Config:
     def __init__(self, filename: str) -> None:
         self.parser = configparser.ConfigParser()
@@ -48,7 +116,12 @@ class Config:
     "--secret", type=click.Path(exists=True, dir_okay=False), default="secrets.ini"
 )
 def main(secret: str) -> None:
-    print(Telegram(**Config(secret).secrets("telegram")).fetch_updates())
+    config = Config(secret)
+    updates = Telegram(**config.secrets("telegram")).fetch_updates()
+    fibery = Fibery(**config.secrets("fibery"))
+    for update in updates:
+        fibery.create_new_material_from_telegram_update(update)
+        print(update)
 
 
 if __name__ == "__main__":
