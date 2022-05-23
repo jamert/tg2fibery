@@ -33,7 +33,7 @@ class Telegram:
                 "Content-Type": "application/json",
             },
         )
-        return TelegramUpdate.from_api_response(response.json())
+        return TelegramUpdate.from_api_response(response.json()["result"])
 
 
 @define
@@ -59,7 +59,8 @@ class Fibery:
                 }
             ],
         )
-        material_id = response.json()["result"]["fibery/id"]
+        # print(response.json())
+        material_id = response.json()[0]["result"]["fibery/id"]
         # get document secret
         response = requests.post(
             url=urljoin(self.netloc, "/api/commands"),
@@ -71,23 +72,26 @@ class Fibery:
                 {
                     "command": "fibery.entity/query",
                     "args": {
-                        "q/from": "Knowledge Management/Material",
-                        "q/select": [
-                            "fibery/id",
-                            {
-                                "Knowledge Management/Praise": [
-                                    "Collaboration~Documents/secret"
-                                ]
-                            },
-                        ],
-                        "q/where": ["=", '["fibery/id"]', "$id"],
-                        "q/limit": 1,
+                        "query": {
+                            "q/from": "Knowledge Management/Material",
+                            "q/select": [
+                                "fibery/id",
+                                {
+                                    "Knowledge Management/Praise": [
+                                        "Collaboration~Documents/secret"
+                                    ]
+                                },
+                            ],
+                            "q/where": ["=", ["fibery/id"], "$id"],
+                            "q/limit": 1,
+                        },
+                        "params": {"$id": material_id},
                     },
-                    "params": {"$id": material_id},
                 }
             ],
         )
-        secret = response.json()["result"][0]["Knowledge Management/Praise"][
+        # print(response.json())
+        secret = response.json()[0]["result"][0]["Knowledge Management/Praise"][
             "Collaboration~Documents/secret"
         ]
         # update Praise
@@ -99,7 +103,7 @@ class Fibery:
             },
             json={"content": msg.content},
         )
-        print(response.status_code)
+        # print(response.status_code)
 
 
 class Config:
@@ -120,8 +124,8 @@ def main(secret: str) -> None:
     updates = Telegram(**config.secrets("telegram")).fetch_updates()
     fibery = Fibery(**config.secrets("fibery"))
     for update in updates:
+        # print(update)
         fibery.create_new_material_from_telegram_update(update)
-        print(update)
 
 
 if __name__ == "__main__":

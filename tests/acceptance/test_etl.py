@@ -52,7 +52,7 @@ class MockTelegram:
                             {
                                 "is": {
                                     "statusCode": 200,
-                                    "body": [self.update(self._message)],
+                                    "body": {"result": [self.update(self._message)]},
                                 }
                             }
                         ],
@@ -129,15 +129,17 @@ class MockFibery:
                 {
                     "is": {
                         "statusCode": 200,
-                        "body": {
-                            "success": True,
-                            "result": {
-                                "fibery/id": self.material_id,
-                                "Knowledge Management/Praise": {
-                                    "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
+                        "body": [
+                            {
+                                "success": True,
+                                "result": {
+                                    "fibery/id": self.material_id,
+                                    "Knowledge Management/Praise": {
+                                        "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
+                                    },
                                 },
-                            },
-                        },
+                            }
+                        ],
                     }
                 }
             ],
@@ -170,17 +172,19 @@ class MockFibery:
                 {
                     "is": {
                         "statusCode": 200,
-                        "body": {
-                            "success": True,
-                            "result": [
-                                {
-                                    "fibery/id": self.material_id,
-                                    "Knowledge Management/Praise": {
-                                        "Collaboration~Documents/secret": self.material_praise_update_secret
-                                    },
-                                }
-                            ],
-                        },
+                        "body": [
+                            {
+                                "success": True,
+                                "result": [
+                                    {
+                                        "fibery/id": self.material_id,
+                                        "Knowledge Management/Praise": {
+                                            "Collaboration~Documents/secret": self.material_praise_update_secret
+                                        },
+                                    }
+                                ],
+                            }
+                        ],
                     }
                 }
             ],
@@ -197,19 +201,21 @@ class MockFibery:
                             {
                                 "command": "fibery.entity/query",
                                 "args": {
-                                    "q/from": "Knowledge Management/Material",
-                                    "q/select": [
-                                        "fibery/id",
-                                        {
-                                            "Knowledge Management/Praise": [
-                                                "Collaboration~Documents/secret"
-                                            ]
-                                        },
-                                    ],
-                                    "q/where": ["=", '["fibery/id"]', "$id"],
-                                    "q/limit": 1,
+                                    "query": {
+                                        "q/from": "Knowledge Management/Material",
+                                        "q/select": [
+                                            "fibery/id",
+                                            {
+                                                "Knowledge Management/Praise": [
+                                                    "Collaboration~Documents/secret"
+                                                ]
+                                            },
+                                        ],
+                                        "q/where": ["=", ["fibery/id"], "$id"],
+                                        "q/limit": 1,
+                                    },
+                                    "params": {"$id": self.material_id},
                                 },
-                                "params": {"$id": self.material_id},
                             }
                         ],
                     },
