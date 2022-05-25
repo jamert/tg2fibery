@@ -6,3 +6,6 @@ deps:
 format:
 	black tests setup.py tg2fibery.py
 	isort tests setup.py tg2fibery.py
+
+test:
+	./run.sh

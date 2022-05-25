@@ -5,11 +5,26 @@ import subprocess
 from contextlib import contextmanager
 from pprint import pprint
 from tempfile import NamedTemporaryFile
-from typing import Optional
+from typing import Optional, Union
 
 import requests
 
 mountebank_address = "http://mountebank:2525"
+
+
+def stub(
+    response: Union[dict, list, None] = None, status_code: int = 200, **predicates: dict
+) -> dict:
+    return {
+        "responses": [
+            {
+                "is": {"statusCode": status_code} | {"body": response}
+                if response is not None
+                else {}
+            }
+        ],
+        "predicates": [{k: pred} for k, pred in predicates.items()],
+    }
 
 
 @contextmanager
@@ -47,25 +62,14 @@ class MockTelegram:
                 "recordRequests": True,
                 "defaultResponse": {"statusCode": 400, "body": "Bad Request"},
                 "stubs": [
-                    {
-                        "responses": [
-                            {
-                                "is": {
-                                    "statusCode": 200,
-                                    "body": {"result": [self.update(self._message)]},
-                                }
-                            }
-                        ],
-                        "predicates": [
-                            {
-                                "equals": {
-                                    "method": "GET",
-                                    "path": f"/bot{self.token}/getUpdates",
-                                    "query": {"limit": 1},
-                                }
-                            }
-                        ],
-                    }
+                    stub(
+                        equals={
+                            "method": "GET",
+                            "path": f"/bot{self.token}/getUpdates",
+                            "query": {"limit": 1},
+                        },
+                        response={"result": [self.update(self._message)]},
+                    )
                 ],
             },
         )
@@ -124,131 +128,96 @@ class MockFibery:
         )
 
     def create_material(self) -> dict:
-        return {
-            "responses": [
-                {
-                    "is": {
-                        "statusCode": 200,
-                        "body": [
-                            {
-                                "success": True,
-                                "result": {
-                                    "fibery/id": self.material_id,
-                                    "Knowledge Management/Praise": {
-                                        "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
-                                    },
-                                },
-                            }
-                        ],
+        return stub(
+            equals={
+                "method": "POST",
+                "path": "/api/commands",
+                "headers": {
+                    "Authorization": f"Token {self.token}",
+                    "Content-Type": "application/json",
+                },
+                "body": [
+                    {
+                        "command": "fibery.entity/create",
+                        "args": {"type": "Knowledge Management/Material"},
                     }
+                ],
+            },
+            exists={"body": [{"args": {"entity": {"fibery/id": True}}}]},
+            response=[
+                {
+                    "success": True,
+                    "result": {
+                        "fibery/id": self.material_id,
+                        "Knowledge Management/Praise": {
+                            "fibery/id": "e034f1c7-a069-4bb9-b606-c2545116e305"
+                        },
+                    },
                 }
             ],
-            "predicates": [
-                {
-                    "equals": {
-                        "method": "POST",
-                        "path": "/api/commands",
-                        "headers": {
-                            "Authorization": f"Token {self.token}",
-                            "Content-Type": "application/json",
-                        },
-                        "body": [
-                            {
-                                "command": "fibery.entity/create",
-                                "args": {"type": "Knowledge Management/Material"},
-                            }
-                        ],
-                    },
-                },
-                {
-                    "exists": {"body": [{"args": {"entity": {"fibery/id": True}}}]},
-                },
-            ],
-        }
+        )
 
     def get_material_praise_secret(self) -> dict:
-        return {
-            "responses": [
-                {
-                    "is": {
-                        "statusCode": 200,
-                        "body": [
-                            {
-                                "success": True,
-                                "result": [
+        return stub(
+            equals={
+                "method": "POST",
+                "path": "/api/commands",
+                "headers": {
+                    "Authorization": f"Token {self.token}",
+                    "Content-Type": "application/json",
+                },
+                "body": [
+                    {
+                        "command": "fibery.entity/query",
+                        "args": {
+                            "query": {
+                                "q/from": "Knowledge Management/Material",
+                                "q/select": [
+                                    "fibery/id",
                                     {
-                                        "fibery/id": self.material_id,
-                                        "Knowledge Management/Praise": {
-                                            "Collaboration~Documents/secret": self.material_praise_update_secret
-                                        },
-                                    }
+                                        "Knowledge Management/Praise": [
+                                            "Collaboration~Documents/secret"
+                                        ]
+                                    },
                                 ],
-                            }
-                        ],
+                                "q/where": ["=", ["fibery/id"], "$id"],
+                                "q/limit": 1,
+                            },
+                            "params": {"$id": self.material_id},
+                        },
                     }
+                ],
+            },
+            response=[
+                {
+                    "success": True,
+                    "result": [
+                        {
+                            "fibery/id": self.material_id,
+                            "Knowledge Management/Praise": {
+                                "Collaboration~Documents/secret": self.material_praise_update_secret
+                            },
+                        }
+                    ],
                 }
             ],
-            "predicates": [
-                {
-                    "equals": {
-                        "method": "POST",
-                        "path": "/api/commands",
-                        "headers": {
-                            "Authorization": f"Token {self.token}",
-                            "Content-Type": "application/json",
-                        },
-                        "body": [
-                            {
-                                "command": "fibery.entity/query",
-                                "args": {
-                                    "query": {
-                                        "q/from": "Knowledge Management/Material",
-                                        "q/select": [
-                                            "fibery/id",
-                                            {
-                                                "Knowledge Management/Praise": [
-                                                    "Collaboration~Documents/secret"
-                                                ]
-                                            },
-                                        ],
-                                        "q/where": ["=", ["fibery/id"], "$id"],
-                                        "q/limit": 1,
-                                    },
-                                    "params": {"$id": self.material_id},
-                                },
-                            }
-                        ],
-                    },
-                },
-            ],
-        }
+        )
 
     def update_material_praise(self) -> dict:
-        return {
-            "responses": [
-                {
-                    "is": {
-                        "statusCode": 200,
-                    }
-                }
-            ],
-            "predicates": [
-                {
-                    "equals": {
-                        "method": "PUT",
-                        "path": f"/api/documents/{self.material_praise_update_secret}",
-                        "query": {"format": "md"},
-                        "headers": {
-                            "Authorization": f"Token {self.token}",
-                            "Content-Type": "application/json",
-                        },
-                    },
-                    "exists": {
-                        "body": {"content": True},
-                    },
+        return stub(
+            equals={
+                "method": "PUT",
+                "path": f"/api/documents/{self.material_praise_update_secret}",
+                "query": {"format": "md"},
+                "headers": {
+                    "Authorization": f"Token {self.token}",
+                    "Content-Type": "application/json",
                 },
-            ],
-        }
+            },
+            exists={
+                "body": {"content": True},
+            },
+        )
 
     def teardown(self) -> None:
         url = f"{mountebank_address}/imposters/{self.port}"
