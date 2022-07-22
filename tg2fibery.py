@@ -41,14 +41,18 @@ class Fibery:
     netloc: str
     token: str
 
+    @property
+    def headers(self) -> dict:
+        return {
+            "Content-Type": "application/json",
+            "Authorization": f"Token {self.token}",
+        }
+
     def create_new_material_from_telegram_update(self, msg: TelegramUpdate) -> None:
         # check if we don't have Sync ID corresponding to update_id
         response = requests.post(
             url=urljoin(self.netloc, "/api/commands"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
+            headers=self.headers,
             json=[
                 {
                     "command": "fibery.entity/query",
@@ -75,10 +79,7 @@ class Fibery:
         # create new Material
         response = requests.post(
             url=urljoin(self.netloc, "/api/commands"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
+            headers=self.headers,
             json=[
                 {
                     "command": "fibery.entity/create",
@@ -94,10 +95,7 @@ class Fibery:
         # get document secret
         response = requests.post(
             url=urljoin(self.netloc, "/api/commands"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
+            headers=self.headers,
             json=[
                 {
                     "command": "fibery.entity/query",
@@ -127,10 +125,7 @@ class Fibery:
         # update Praise
         response = requests.put(
             url=urljoin(self.netloc, f"/api/documents/{secret}?format=md"),
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Token {self.token}",
-            },
+            headers=self.headers,
             json={"content": msg.content},
         )
         # print(response.status_code)
