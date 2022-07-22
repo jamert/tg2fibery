@@ -156,7 +156,18 @@ class MockFibery:
                     }
                 ],
             },
-            exists={"body": [{"args": {"entity": {"fibery/id": True}}}]},
+            exists={
+                "body": [
+                    {
+                        "args": {
+                            "entity": {
+                                "fibery/id": True,
+                                "Knowledge Management/Sync ID": True,
+                            }
+                        }
+                    }
+                ]
+            },
             response=[
                 {
                     "success": True,

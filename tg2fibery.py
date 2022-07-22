@@ -29,9 +29,9 @@ class Telegram:
     netloc: str
     token: str
 
-    def fetch_updates(self) -> List[TelegramUpdate]:
+    def fetch_updates(self, limit: int = 1) -> List[TelegramUpdate]:
         response = requests.get(
-            url=f"{self.netloc}/bot{self.token}/getUpdates?limit=1",
+            url=f"{self.netloc}/bot{self.token}/getUpdates?limit={limit}",
             headers={
                 "Content-Type": "application/json",
             },
@@ -88,7 +88,10 @@ class Fibery:
                     "command": "fibery.entity/create",
                     "args": {
                         "type": "Knowledge Management/Material",
-                        "entity": {"fibery/id": str(uuid4())},
+                        "entity": {
+                            "fibery/id": str(uuid4()),
+                            "Knowledge Management/Sync ID": f"tg:{msg.update_id}",
+                        },
                     },
                 }
             ],
@@ -147,12 +150,13 @@ class Config:
 @click.option(
     "--secret", type=click.Path(exists=True, dir_okay=False), default="secrets.ini"
 )
-def main(secret: str) -> None:
+@click.option("-n", type=click.INT, default=1)
+def main(secret: str, n: int) -> None:
     config = Config(secret)
-    updates = Telegram(**config.secrets("telegram")).fetch_updates()
+    updates = Telegram(**config.secrets("telegram")).fetch_updates(limit=n)
     fibery = Fibery(**config.secrets("fibery"))
     for update in updates:
-        # print(update)
+        print(update.update_id)
         fibery.create_new_material_from_telegram_update(update)
 
 
