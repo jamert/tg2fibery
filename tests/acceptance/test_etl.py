@@ -301,11 +301,7 @@ class MockFibery:
             response=[
                 {
                     "success": True,
-                    "result": [
-                        {
-                            "fibery/id": self._material_id,
-                        }
-                    ],
+                    "result": [],
                 }
             ],
         )

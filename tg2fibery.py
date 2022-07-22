@@ -42,6 +42,36 @@ class Fibery:
     token: str
 
     def create_new_material_from_telegram_update(self, msg: TelegramUpdate) -> None:
+        # check if we don't have Sync ID corresponding to update_id
+        response = requests.post(
+            url=urljoin(self.netloc, "/api/commands"),
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Token {self.token}",
+            },
+            json=[
+                {
+                    "command": "fibery.entity/query",
+                    "args": {
+                        "query": {
+                            "q/from": "Knowledge Management/Material",
+                            "q/select": ["fibery/id"],
+                            "q/where": [
+                                "=",
+                                ["Knowledge Management/Sync ID"],
+                                "$id",
+                            ],
+                            "q/limit": 1,
+                        },
+                        "params": {"$id": f"tg:{msg.update_id}"},
+                    },
+                }
+            ],
+        )
+        # print(response.json())
+        if len(response.json()[0]["result"]) > 0:
+            return
+
         # create new Material
         response = requests.post(
             url=urljoin(self.netloc, "/api/commands"),
