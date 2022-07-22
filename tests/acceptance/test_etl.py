@@ -114,6 +114,11 @@ class MockFibery:
         self.token = "4748asad.FAGA89002AJFDAFasfucuciocgah2222"
         self.address = f"{mountebank_address}".replace("2525", str(self.port))
 
+        self._headers = {
+            "Authorization": f"Token {self.token}",
+            "Content-Type": "application/json",
+        }
+
         self._state = state
         self._material_id = "90c6d940-ce27-11ec-b591-698a572b9bd4"
         self._material_praise_update_secret = "b33a25d1-99ba-11e9-8c59-09d0cb6f3aeb"
@@ -143,10 +148,7 @@ class MockFibery:
             equals={
                 "method": "POST",
                 "path": "/api/commands",
-                "headers": {
-                    "Authorization": f"Token {self.token}",
-                    "Content-Type": "application/json",
-                },
+                "headers": self._headers,
                 "body": [
                     {
                         "command": "fibery.entity/create",
@@ -173,10 +175,7 @@ class MockFibery:
             equals={
                 "method": "POST",
                 "path": "/api/commands",
-                "headers": {
-                    "Authorization": f"Token {self.token}",
-                    "Content-Type": "application/json",
-                },
+                "headers": self._headers,
                 "body": [
                     {
                         "command": "fibery.entity/query",
@@ -220,10 +219,7 @@ class MockFibery:
                 "method": "PUT",
                 "path": f"/api/documents/{self._material_praise_update_secret}",
                 "query": {"format": "md"},
-                "headers": {
-                    "Authorization": f"Token {self.token}",
-                    "Content-Type": "application/json",
-                },
+                "headers": self._headers,
             },
             exists={
                 "body": {"content": True},
@@ -235,10 +231,7 @@ class MockFibery:
             equals={
                 "method": "POST",
                 "path": "/api/commands",
-                "headers": {
-                    "Authorization": f"Token {self.token}",
-                    "Content-Type": "application/json",
-                },
+                "headers": self._headers,
                 "body": [
                     {
                         "command": "fibery.entity/query",
@@ -275,10 +268,7 @@ class MockFibery:
             equals={
                 "method": "POST",
                 "path": "/api/commands",
-                "headers": {
-                    "Authorization": f"Token {self.token}",
-                    "Content-Type": "application/json",
-                },
+                "headers": self._headers,
                 "body": [
                     {
                         "command": "fibery.entity/query",
