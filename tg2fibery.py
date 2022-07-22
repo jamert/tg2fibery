@@ -17,7 +17,10 @@ class TelegramUpdate:
     @classmethod
     def from_api_response(cls, value: list) -> List["TelegramUpdate"]:
         return [
-            cls(u["update_id"], u["message"]["text"]) for u in value if "message" in u
+            # TODO: tests on different messages
+            cls(u["update_id"], u["message"].get("caption") or u["message"]["text"])
+            for u in value
+            if "message" in u
         ]
 
 
