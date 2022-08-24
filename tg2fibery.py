@@ -21,6 +21,7 @@ class TelegramUpdate:
             cls(u["update_id"], u["message"].get("caption") or u["message"]["text"])
             for u in value
             if "message" in u
+            and (u["message"].get("caption") or u["message"].get("text"))
         ]
 
 
